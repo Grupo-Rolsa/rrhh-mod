@@ -8,8 +8,8 @@
         Módulo de RRHH para Guatemala
     """,
 
-    'author': "Rodolfo Borstcheff",
-    'website': "http://www.aquih.com",
+    'author': "Rodolfo Borstcheff, Jorge Rodríguez",
+    # 'website': "http://www.aquih.com",
 
     'category': 'Uncategorized',
     'version': '0.1',

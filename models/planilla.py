@@ -22,6 +22,7 @@ class rrhh_planilla_columna(models.Model):
     entrada_id = fields.Many2many('hr.payslip.input.type',id1='columna_id',id2='entrada_id',string='Entradas')
     planilla_id = fields.Many2one('rrhh.planilla', 'Planilla', required=False)
     sumar = fields.Boolean('Sumar en liquido a recibir', help="Seleccionar si se desea que se tome en cuenta en la suma del liquido a recibir.")
+    es_descuento = fields.Boolean('Es descuento', help="Seleccionar si el monto es un descuento, si es una percepción dejar sin seleccionar.")
 
 class rrhh_recibo(models.Model):
     _name = 'rrhh.recibo'
