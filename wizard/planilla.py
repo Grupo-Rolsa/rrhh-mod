@@ -37,7 +37,9 @@ class rrhh_planilla_wizard(models.TransientModel):
         for w in self:
             f = io.BytesIO()
             libro = xlsxwriter.Workbook(f)
-            formato_fecha = libro.add_format({'num_format': 'dd/mm/yy'})
+            header_format = libro.add_format({'bold': True, 'align': 'center', 'valign': 'vcenter', 'font_size': 8, 'border': 1})
+            default_format = libro.add_format({'font_size': 8, 'border': 1})
+            formato_fecha = libro.add_format({'num_format': 'dd/mm/yy', 'font_size': 8, 'border': 1})
             if w.agrupado:
                 # partidas_iguales, contiene un diccionario de todas las partidas de la nomina, en el caso de que unifiquen todas las nóminas
                 # en una partida o en el caso que no, asi mas adelante podemos clasificar por cuenta analítica de la partida o por la cuenta analítica de la nómina
@@ -250,46 +252,70 @@ class rrhh_planilla_wizard(models.TransientModel):
             else:
                 hoja = libro.add_worksheet('reporte')
 
-                hoja.write(0, 0, 'Planilla')
-                hoja.write(0, 1, w.nomina_id.name)
-                hoja.write(0, 2, 'Periodo')
+                hoja.write(0, 0, 'Planilla', default_format)
+                hoja.write(0, 1, w.nomina_id.name, default_format)
+                hoja.write(0, 2, 'Periodo', default_format)
                 hoja.write(0, 3, w.nomina_id.date_start, formato_fecha)
                 hoja.write(0, 4, w.nomina_id.date_end, formato_fecha)
 
-                linea = 2
+                linea = 3
                 num = 1
 
-                hoja.write(linea, 0, 'No')
-                hoja.write(linea, 1, 'Cod. de empleado')
-                hoja.write(linea, 2, 'Nombre de empleado')
-                hoja.write(linea, 3, 'Fecha de ingreso')
-                hoja.write(linea, 4, 'Puesto')
-                hoja.write(linea, 5, 'Dias')
+                hoja.write(linea, 0, 'No', header_format)
+                hoja.write(linea, 1, 'Cod. de empleado', header_format)
+                hoja.write(linea, 2, 'Nombre de empleado', header_format)
+                hoja.write(linea, 3, 'Fecha de ingreso', header_format)
+                hoja.write(linea, 4, 'Puesto', header_format)
+                hoja.write(linea, 5, 'Dias', header_format)
 
                 totales = []
                 columna = 6
-                for c in w.planilla_id.columna_id:
-                    hoja.write(linea, columna, c.name)
+
+                columnas_percepcion = w.planilla_id.columna_id.filtered(lambda x: x.es_descuento == False)
+                columnas_descuento = w.planilla_id.columna_id.filtered(lambda x: x.es_descuento == True)
+
+                # Percepciones
+                perc_range = (columna, columna + len(columnas_percepcion) - 1)
+                hoja.merge_range(
+                    2, perc_range[0], 2, perc_range[1],
+                    'Percepciones', 
+                    header_format
+                )
+                for c in columnas_percepcion:
+                    hoja.write(linea, columna, c.name, header_format)
                     columna += 1
                     totales.append(0)
                 totales.append(0)
 
-                hoja.write(linea, columna, 'Liquido a recibir')
-                hoja.write(linea, columna+1, 'Banco a depositar')
-                hoja.write(linea, columna+2, 'Cuenta a depositar')
-                hoja.write(linea, columna+3, 'Observaciones')
-                hoja.write(linea, columna+4, 'Cuenta analítica')
+                # Descuentos
+                desc_range = (columna, columna + len(columnas_descuento) - 1)
+                hoja.merge_range(
+                    2, desc_range[0], 2, desc_range[1],
+                    'Descuentos', 
+                    header_format
+                )
+                for c in columnas_descuento:
+                    hoja.write(linea, columna, c.name, header_format)
+                    columna += 1
+                    totales.append(0)
+                totales.append(0)
+
+                hoja.write(linea, columna, 'Liquido a recibir', header_format)
+                hoja.write(linea, columna+1, 'Banco a depositar', header_format)
+                hoja.write(linea, columna+2, 'Cuenta a depositar', header_format)
+                hoja.write(linea, columna+3, 'Observaciones', header_format)
+                hoja.write(linea, columna+4, 'Cuenta analítica', header_format)
 
                 linea += 1
                 for l in w.nomina_id.slip_ids:
                     dias = 0
                     total_salario = 0
 
-                    hoja.write(linea, 0, num)
-                    hoja.write(linea, 1, l.employee_id.codigo_empleado)
-                    hoja.write(linea, 2, l.employee_id.name)
-                    hoja.write(linea, 3, l.contract_id.date_start,formato_fecha)
-                    hoja.write(linea, 4, l.employee_id.job_id.name)
+                    hoja.write(linea, 0, num, default_format)
+                    hoja.write(linea, 1, l.employee_id.codigo_empleado, default_format)
+                    hoja.write(linea, 2, l.employee_id.name, default_format)
+                    hoja.write(linea, 3, l.contract_id.date_start,formato_fecha, default_format)
+                    hoja.write(linea, 4, l.employee_id.job_id.name, default_format)
                     work = -1
                     trabajo = -1
                     for d in l.worked_days_line_ids:
@@ -301,7 +327,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                         dias += trabajo
                     else:
                         dias += work
-                    hoja.write(linea, 5, dias)
+                    hoja.write(linea, 5, dias, default_format)
 
                     columna = 6
                     for c in w.planilla_id.columna_id:
@@ -318,24 +344,24 @@ class rrhh_planilla_wizard(models.TransientModel):
                             total_salario += total_columna
                         totales[columna-6] += total_columna
 
-                        hoja.write(linea, columna, total_columna)
+                        hoja.write(linea, columna, total_columna, default_format)
                         columna += 1
 
                     totales[columna-6] += total_salario
-                    hoja.write(linea, columna, total_salario)
-                    hoja.write(linea, columna+1, l.employee_id.bank_account_id.bank_id.name)
-                    hoja.write(linea, columna+2, l.employee_id.bank_account_id.acc_number)
-                    hoja.write(linea, columna+3, l.note)
+                    hoja.write(linea, columna, total_salario, default_format)
+                    hoja.write(linea, columna+1, l.employee_id.bank_account_id.bank_id.name, default_format)
+                    hoja.write(linea, columna+2, l.employee_id.bank_account_id.acc_number, default_format)
+                    hoja.write(linea, columna+3, l.note, default_format)
                     if l.cuenta_analitica_id:
-                        hoja.write(linea, columna+4, l.cuenta_analitica_id.name)
+                        hoja.write(linea, columna+4, l.cuenta_analitica_id.name, default_format)
                     else:
-                        hoja.write(linea, columna+4, 'indefinido')
+                        hoja.write(linea, columna+4, 'indefinido', default_format)
                     linea += 1
                     num += 1
 
                 columna = 6
                 for t in totales:
-                    hoja.write(linea, columna, totales[columna-6])
+                    hoja.write(linea, columna, totales[columna-6], default_format)
                     columna += 1
 
             libro.close()

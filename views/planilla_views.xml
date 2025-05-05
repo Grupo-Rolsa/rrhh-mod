@@ -24,7 +24,7 @@
                         <field name="descripcion"/>
                     </group>
                 </group>
-                <notebook colspan="4">
+                <notebook colspan="5">
                     <page string="Columnas">
                         <field name="columna_id">
                             <tree editable="bottom">
