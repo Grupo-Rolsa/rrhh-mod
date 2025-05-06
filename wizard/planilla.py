@@ -330,7 +330,25 @@ class rrhh_planilla_wizard(models.TransientModel):
                     hoja.write(linea, 5, dias, default_format)
 
                     columna = 6
-                    for c in w.planilla_id.columna_id:
+
+                    for c in columnas_percepcion:
+                        reglas = [x.id for x in c.regla_id]
+                        entradas = [x.name for x in c.entrada_id]
+                        total_columna = 0
+                        for r in l.line_ids:
+                            if r.salary_rule_id.id in reglas:
+                                total_columna += r.total
+                        for r in l.input_line_ids:
+                            if r.name in entradas:
+                                total_columna += r.amount
+                        if c.sumar:
+                            total_salario += total_columna
+                        totales[columna-6] += total_columna
+
+                        hoja.write(linea, columna, total_columna, default_format)
+                        columna += 1
+
+                    for c in columnas_descuento:
                         reglas = [x.id for x in c.regla_id]
                         entradas = [x.name for x in c.entrada_id]
                         total_columna = 0
