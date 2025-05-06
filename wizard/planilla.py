@@ -262,14 +262,18 @@ class rrhh_planilla_wizard(models.TransientModel):
                 num = 1
 
                 hoja.write(linea, 0, 'No', header_format)
-                hoja.write(linea, 1, 'Cod. de empleado', header_format)
-                hoja.write(linea, 2, 'Nombre de empleado', header_format)
-                hoja.write(linea, 3, 'Fecha de ingreso', header_format)
-                hoja.write(linea, 4, 'Puesto', header_format)
-                hoja.write(linea, 5, 'Dias', header_format)
+                hoja.write(linea, 1, 'Celular', header_format)
+                hoja.write(linea, 2, 'Cod. de empleado', header_format)
+                hoja.write(linea, 3, 'Nombre de empleado', header_format)
+                hoja.write(linea, 4, 'NSS', header_format)
+                hoja.write(linea, 5, 'Puesto', header_format)
+                hoja.write(linea, 6, 'Fecha alta', header_format)
+                hoja.write(linea, 7, 'Fecha baja', header_format)
+                hoja.write(linea, 8, 'Dias', header_format)
 
                 totales = []
-                columna = 6
+                columna_pd = 9
+                columna = columna_pd
 
                 columnas_percepcion = w.planilla_id.columna_id.filtered(lambda x: x.es_descuento == False)
                 columnas_descuento = w.planilla_id.columna_id.filtered(lambda x: x.es_descuento == True)
@@ -300,11 +304,9 @@ class rrhh_planilla_wizard(models.TransientModel):
                     totales.append(0)
                 totales.append(0)
 
-                hoja.write(linea, columna, 'Liquido a recibir', header_format)
-                hoja.write(linea, columna+1, 'Banco a depositar', header_format)
-                hoja.write(linea, columna+2, 'Cuenta a depositar', header_format)
-                hoja.write(linea, columna+3, 'Observaciones', header_format)
-                hoja.write(linea, columna+4, 'Cuenta analítica', header_format)
+                hoja.write(linea, columna, 'Liquido', header_format)
+                hoja.write(linea, columna+1, 'Cédula', header_format)
+                hoja.write(linea, columna+2, 'CECO', header_format)
 
                 linea += 1
                 for l in w.nomina_id.slip_ids:
@@ -312,10 +314,13 @@ class rrhh_planilla_wizard(models.TransientModel):
                     total_salario = 0
 
                     hoja.write(linea, 0, num, default_format)
-                    hoja.write(linea, 1, l.employee_id.codigo_empleado, default_format)
-                    hoja.write(linea, 2, l.employee_id.name, default_format)
-                    hoja.write(linea, 3, l.contract_id.date_start,formato_fecha, default_format)
-                    hoja.write(linea, 4, l.employee_id.job_id.name, default_format)
+                    hoja.write(linea, 1, l.employee_id.mobile_phone, default_format)
+                    hoja.write(linea, 2, l.employee_id.codigo_empleado, default_format)
+                    hoja.write(linea, 3, l.employee_id.name, default_format)
+                    hoja.write(linea, 4, l.employee_id.igss, default_format)
+                    hoja.write(linea, 5, l.employee_id.job_id.name, default_format)
+                    hoja.write(linea, 6, l.contract_id.date_start,formato_fecha, default_format)
+                    hoja.write(linea, 7, l.contract_id.date_start,formato_fecha, default_format)
                     work = -1
                     trabajo = -1
                     for d in l.worked_days_line_ids:
@@ -327,9 +332,9 @@ class rrhh_planilla_wizard(models.TransientModel):
                         dias += trabajo
                     else:
                         dias += work
-                    hoja.write(linea, 5, dias, default_format)
+                    hoja.write(linea, 8, dias, default_format)
 
-                    columna = 6
+                    columna = columna_pd
 
                     for c in columnas_percepcion:
                         reglas = [x.id for x in c.regla_id]
@@ -343,7 +348,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                                 total_columna += r.amount
                         if c.sumar:
                             total_salario += total_columna
-                        totales[columna-6] += total_columna
+                        totales[columna-columna_pd] += total_columna
 
                         hoja.write(linea, columna, total_columna, default_format)
                         columna += 1
@@ -360,26 +365,24 @@ class rrhh_planilla_wizard(models.TransientModel):
                                 total_columna += r.amount
                         if c.sumar:
                             total_salario += total_columna
-                        totales[columna-6] += total_columna
+                        totales[columna-columna_pd] += total_columna
 
                         hoja.write(linea, columna, total_columna, default_format)
                         columna += 1
 
-                    totales[columna-6] += total_salario
+                    totales[columna-columna_pd] += total_salario
                     hoja.write(linea, columna, total_salario, default_format)
-                    hoja.write(linea, columna+1, l.employee_id.bank_account_id.bank_id.name, default_format)
-                    hoja.write(linea, columna+2, l.employee_id.bank_account_id.acc_number, default_format)
-                    hoja.write(linea, columna+3, l.note, default_format)
+                    hoja.write(linea, columna+1, l.employee_id.identification_id , default_format)
                     if l.cuenta_analitica_id:
-                        hoja.write(linea, columna+4, l.cuenta_analitica_id.name, default_format)
+                        hoja.write(linea, columna+2, l.cuenta_analitica_id.name, default_format)
                     else:
-                        hoja.write(linea, columna+4, 'indefinido', default_format)
+                        hoja.write(linea, columna+2, 'indefinido', default_format)
                     linea += 1
                     num += 1
 
-                columna = 6
+                columna = columna_pd
                 for t in totales:
-                    hoja.write(linea, columna, totales[columna-6], default_format)
+                    hoja.write(linea, columna, totales[columna-columna_pd], default_format)
                     columna += 1
 
             libro.close()
