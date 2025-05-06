@@ -8,7 +8,7 @@
             'search_default_employee_id': [active_id],
             'default_employee_id': active_id,
             'search_default_group_by_state': 1
-        }</field>
+        </field>
     </record>
 
     <record id="act_rrhh_prestamo_2" model="ir.actions.act_window">

@@ -38,6 +38,7 @@ class rrhh_planilla_wizard(models.TransientModel):
             f = io.BytesIO()
             libro = xlsxwriter.Workbook(f)
             header_format = libro.add_format({'bold': True, 'align': 'center', 'valign': 'vcenter', 'font_size': 8, 'border': 1})
+            header_format.set_text_wrap()
             default_format = libro.add_format({'font_size': 8, 'border': 1})
             formato_fecha = libro.add_format({'num_format': 'dd/mm/yy', 'font_size': 8, 'border': 1})
             if w.agrupado:
@@ -279,34 +280,37 @@ class rrhh_planilla_wizard(models.TransientModel):
                 columnas_descuento = w.planilla_id.columna_id.filtered(lambda x: x.es_descuento == True)
 
                 # Percepciones
-                perc_range = (columna, columna + len(columnas_percepcion) - 1)
-                hoja.merge_range(
-                    2, perc_range[0], 2, perc_range[1],
-                    'Percepciones', 
-                    header_format
-                )
-                for c in columnas_percepcion:
-                    hoja.write(linea, columna, c.name, header_format)
-                    columna += 1
+                if len(columnas_percepcion) > 0:
+                    perc_range = (columna, columna + len(columnas_percepcion) - 1)
+                    hoja.merge_range(
+                        2, perc_range[0], 2, perc_range[1],
+                        'Percepciones', 
+                        header_format
+                    )
+                    for c in columnas_percepcion:
+                        hoja.write(linea, columna, c.name, header_format)
+                        columna += 1
+                        totales.append(0)
                     totales.append(0)
-                totales.append(0)
 
                 # Descuentos
-                desc_range = (columna, columna + len(columnas_descuento) - 1)
-                hoja.merge_range(
-                    2, desc_range[0], 2, desc_range[1],
-                    'Descuentos', 
-                    header_format
-                )
-                for c in columnas_descuento:
-                    hoja.write(linea, columna, c.name, header_format)
-                    columna += 1
+                if len(columnas_descuento) > 0:
+                    desc_range = (columna, columna + len(columnas_descuento) - 1)
+                    hoja.merge_range(
+                        2, desc_range[0], 2, desc_range[1],
+                        'Descuentos', 
+                        header_format
+                    )
+                    for c in columnas_descuento:
+                        hoja.write(linea, columna, c.name, header_format)
+                        columna += 1
+                        totales.append(0)
                     totales.append(0)
-                totales.append(0)
 
                 hoja.write(linea, columna, 'Liquido', header_format)
                 hoja.write(linea, columna+1, 'Cédula', header_format)
                 hoja.write(linea, columna+2, 'CECO', header_format)
+                hoja.set_column(columna+1, columna+2, 10)
 
                 linea += 1
                 for l in w.nomina_id.slip_ids:
@@ -319,8 +323,8 @@ class rrhh_planilla_wizard(models.TransientModel):
                     hoja.write(linea, 3, l.employee_id.name, default_format)
                     hoja.write(linea, 4, l.employee_id.igss, default_format)
                     hoja.write(linea, 5, l.employee_id.job_id.name, default_format)
-                    hoja.write(linea, 6, l.contract_id.date_start,formato_fecha, default_format)
-                    hoja.write(linea, 7, l.contract_id.date_start,formato_fecha, default_format)
+                    hoja.write(linea, 6, l.contract_id.date_start,formato_fecha)
+                    hoja.write(linea, 7, l.contract_id.date_start,formato_fecha)
                     work = -1
                     trabajo = -1
                     for d in l.worked_days_line_ids:
@@ -336,39 +340,41 @@ class rrhh_planilla_wizard(models.TransientModel):
 
                     columna = columna_pd
 
-                    for c in columnas_percepcion:
-                        reglas = [x.id for x in c.regla_id]
-                        entradas = [x.name for x in c.entrada_id]
-                        total_columna = 0
-                        for r in l.line_ids:
-                            if r.salary_rule_id.id in reglas:
-                                total_columna += r.total
-                        for r in l.input_line_ids:
-                            if r.name in entradas:
-                                total_columna += r.amount
-                        if c.sumar:
-                            total_salario += total_columna
-                        totales[columna-columna_pd] += total_columna
+                    if len(columnas_percepcion) > 0:
+                        for c in columnas_percepcion:
+                            reglas = [x.id for x in c.regla_id]
+                            entradas = [x.name for x in c.entrada_id]
+                            total_columna = 0
+                            for r in l.line_ids:
+                                if r.salary_rule_id.id in reglas:
+                                    total_columna += r.total
+                            for r in l.input_line_ids:
+                                if r.name in entradas:
+                                    total_columna += r.amount
+                            if c.sumar:
+                                total_salario += total_columna
+                            totales[columna-columna_pd] += total_columna
 
-                        hoja.write(linea, columna, total_columna, default_format)
-                        columna += 1
+                            hoja.write(linea, columna, total_columna, default_format)
+                            columna += 1
+                    
+                    if len(columnas_descuento) > 0:
+                        for c in columnas_descuento:
+                            reglas = [x.id for x in c.regla_id]
+                            entradas = [x.name for x in c.entrada_id]
+                            total_columna = 0
+                            for r in l.line_ids:
+                                if r.salary_rule_id.id in reglas:
+                                    total_columna += r.total
+                            for r in l.input_line_ids:
+                                if r.name in entradas:
+                                    total_columna += r.amount
+                            if c.sumar:
+                                total_salario += total_columna
+                            totales[columna-columna_pd] += total_columna
 
-                    for c in columnas_descuento:
-                        reglas = [x.id for x in c.regla_id]
-                        entradas = [x.name for x in c.entrada_id]
-                        total_columna = 0
-                        for r in l.line_ids:
-                            if r.salary_rule_id.id in reglas:
-                                total_columna += r.total
-                        for r in l.input_line_ids:
-                            if r.name in entradas:
-                                total_columna += r.amount
-                        if c.sumar:
-                            total_salario += total_columna
-                        totales[columna-columna_pd] += total_columna
-
-                        hoja.write(linea, columna, total_columna, default_format)
-                        columna += 1
+                            hoja.write(linea, columna, total_columna, default_format)
+                            columna += 1
 
                     totales[columna-columna_pd] += total_salario
                     hoja.write(linea, columna, total_salario, default_format)
@@ -385,6 +391,10 @@ class rrhh_planilla_wizard(models.TransientModel):
                     hoja.write(linea, columna, totales[columna-columna_pd], default_format)
                     columna += 1
 
+            hoja.set_column(0,0,4)
+            hoja.set_column(1,2,12)
+            hoja.set_column(3,3,25)
+            hoja.set_row(3, 20)
             libro.close()
             datos = base64.b64encode(f.getvalue())
             self.write({'archivo': datos})
