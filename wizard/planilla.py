@@ -393,7 +393,10 @@ class rrhh_planilla_wizard(models.TransientModel):
                     hoja.write(linea, columna, totales[columna-columna_pd], number_format)
                     columna += 1
 
-            hoja.autofit()
+            hoja.set_column(0,0,4)
+            hoja.set_column(1,2,12)
+            hoja.set_column(3,3,25)
+            hoja.set_row(3, 20)
             libro.close()
             datos = base64.b64encode(f.getvalue())
             self.write({'archivo': datos})
