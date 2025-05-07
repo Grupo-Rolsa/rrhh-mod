@@ -40,6 +40,8 @@ class rrhh_planilla_wizard(models.TransientModel):
             header_format = libro.add_format({'bold': True, 'align': 'center', 'valign': 'vcenter', 'font_size': 8, 'border': 1})
             header_format.set_text_wrap()
             default_format = libro.add_format({'font_size': 8, 'border': 1})
+            info_format = libro.add_format({'font_size': 8})
+            number_format = libro.add_format({'num_format': '#,##0.00', 'font_size': 8, 'border': 1})
             formato_fecha = libro.add_format({'num_format': 'dd/mm/yy', 'font_size': 8, 'border': 1})
             if w.agrupado:
                 # partidas_iguales, contiene un diccionario de todas las partidas de la nomina, en el caso de que unifiquen todas las nóminas
@@ -253,11 +255,11 @@ class rrhh_planilla_wizard(models.TransientModel):
             else:
                 hoja = libro.add_worksheet('reporte')
 
-                hoja.write(0, 0, 'Planilla', default_format)
-                hoja.write(0, 1, w.nomina_id.name, default_format)
-                hoja.write(0, 2, 'Periodo', default_format)
-                hoja.write(0, 3, w.nomina_id.date_start, formato_fecha)
-                hoja.write(0, 4, w.nomina_id.date_end, formato_fecha)
+                hoja.write(0, 0, 'Planilla', info_format)
+                hoja.write(0, 1, w.nomina_id.name, info_format)
+                hoja.write(0, 2, 'Periodo', info_format)
+                hoja.write(0, 3, w.nomina_id.date_start, info_format)
+                hoja.write(0, 4, w.nomina_id.date_end, info_format)
 
                 linea = 3
                 num = 1
@@ -291,7 +293,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                         hoja.write(linea, columna, c.name, header_format)
                         columna += 1
                         totales.append(0)
-                    totales.append(0)
+                    # totales.append(0)
 
                 # Descuentos
                 if len(columnas_descuento) > 0:
@@ -324,7 +326,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                     hoja.write(linea, 4, l.employee_id.igss, default_format)
                     hoja.write(linea, 5, l.employee_id.job_id.name, default_format)
                     hoja.write(linea, 6, l.contract_id.date_start,formato_fecha)
-                    hoja.write(linea, 7, l.contract_id.date_start,formato_fecha)
+                    hoja.write(linea, 7, l.contract_id.date_end,formato_fecha)
                     work = -1
                     trabajo = -1
                     for d in l.worked_days_line_ids:
@@ -355,7 +357,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                                 total_salario += total_columna
                             totales[columna-columna_pd] += total_columna
 
-                            hoja.write(linea, columna, total_columna, default_format)
+                            hoja.write(linea, columna, total_columna, number_format)
                             columna += 1
                     
                     if len(columnas_descuento) > 0:
@@ -373,11 +375,11 @@ class rrhh_planilla_wizard(models.TransientModel):
                                 total_salario += total_columna
                             totales[columna-columna_pd] += total_columna
 
-                            hoja.write(linea, columna, total_columna, default_format)
+                            hoja.write(linea, columna, total_columna, number_format)
                             columna += 1
 
                     totales[columna-columna_pd] += total_salario
-                    hoja.write(linea, columna, total_salario, default_format)
+                    hoja.write(linea, columna, total_salario, number_format)
                     hoja.write(linea, columna+1, l.employee_id.identification_id , default_format)
                     if l.cuenta_analitica_id:
                         hoja.write(linea, columna+2, l.cuenta_analitica_id.name, default_format)
@@ -388,7 +390,7 @@ class rrhh_planilla_wizard(models.TransientModel):
 
                 columna = columna_pd
                 for t in totales:
-                    hoja.write(linea, columna, totales[columna-columna_pd], default_format)
+                    hoja.write(linea, columna, totales[columna-columna_pd], number_format)
                     columna += 1
 
             hoja.set_column(0,0,4)
