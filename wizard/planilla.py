@@ -41,7 +41,9 @@ class rrhh_planilla_wizard(models.TransientModel):
             header_format.set_text_wrap()
             default_format = libro.add_format({'font_size': 8, 'border': 1})
             info_format = libro.add_format({'font_size': 8})
+            info_format_date = libro.add_format({'num_format': 'dd/mm/yy','font_size': 8})
             number_format = libro.add_format({'num_format': '#,##0.00', 'font_size': 8, 'border': 1})
+            number_format_bold = libro.add_format({'num_format': '#,##0.00', 'font_size': 8, 'border': 1, 'bold': True})
             formato_fecha = libro.add_format({'num_format': 'dd/mm/yy', 'font_size': 8, 'border': 1})
             if w.agrupado:
                 # partidas_iguales, contiene un diccionario de todas las partidas de la nomina, en el caso de que unifiquen todas las nóminas
@@ -258,8 +260,8 @@ class rrhh_planilla_wizard(models.TransientModel):
                 hoja.write(0, 0, 'Planilla', info_format)
                 hoja.write(0, 1, w.nomina_id.name, info_format)
                 hoja.write(0, 2, 'Periodo', info_format)
-                hoja.write(0, 3, w.nomina_id.date_start, info_format)
-                hoja.write(0, 4, w.nomina_id.date_end, info_format)
+                hoja.write(0, 3, w.nomina_id.date_start, info_format_date)
+                hoja.write(0, 4, w.nomina_id.date_end, info_format_date)
 
                 linea = 3
                 num = 1
@@ -390,7 +392,7 @@ class rrhh_planilla_wizard(models.TransientModel):
 
                 columna = columna_pd
                 for t in totales:
-                    hoja.write(linea, columna, totales[columna-columna_pd], number_format)
+                    hoja.write(linea, columna, totales[columna-columna_pd], number_format_bold)
                     columna += 1
 
             hoja.set_column(0,0,4)
