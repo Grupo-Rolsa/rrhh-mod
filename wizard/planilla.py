@@ -312,7 +312,7 @@ class rrhh_planilla_wizard(models.TransientModel):
                     totales.append(0)
 
                 hoja.write(linea, columna, 'Liquido', header_format)
-                hoja.write(linea, columna+1, 'Cédula', header_format)
+                hoja.write(linea, columna+1, 'Cuenta', header_format)
                 hoja.write(linea, columna+2, 'CECO', header_format)
                 hoja.set_column(columna+1, columna+2, 10)
 
@@ -382,7 +382,7 @@ class rrhh_planilla_wizard(models.TransientModel):
 
                     totales[columna-columna_pd] += total_salario
                     hoja.write(linea, columna, total_salario, number_format)
-                    hoja.write(linea, columna+1, l.employee_id.identification_id , default_format)
+                    hoja.write(linea, columna+1, l.employee_id.bank_account_id.acc_number , default_format)
                     if l.cuenta_analitica_id:
                         hoja.write(linea, columna+2, l.cuenta_analitica_id.name, default_format)
                     else:
